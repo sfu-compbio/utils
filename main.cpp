@@ -2,6 +2,7 @@
 #include "toLower.h"
 #include "split.h"
 #include "getStat.h"
+#include "format.h"
 #include "common.h"
 
 using namespace std;
@@ -34,6 +35,10 @@ int main(int argc, char* argv[])
 		{
 			return program_getStat(argc, argv);
 		}
+		else if(com == "format")
+		{
+			return program_format(argc, argv);
+		}
 		else
 		{
 			printHelp_main();
@@ -48,6 +53,7 @@ void printHelp_main()
 	cerr<< "Usage: fastUtils <command> [options]" << endl;
 	cerr<< endl;
 	cerr<< "command: getStat      prints general statistics of fasta/q files" << endl;
+	cerr<< "         format       re-format the fasta/q file based on user's needs" << endl;
 	cerr<< "         shuffle      interleave/interlace fasta/q files" << endl;
 	cerr<< "         toLower      convert fasta/q reads to lowercase" << endl;
 	cerr<< "         split        split a fasta/q file into smaller files" << endl;
