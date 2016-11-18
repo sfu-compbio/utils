@@ -43,20 +43,30 @@ int program_getStat(int argc, char* argv[])
 			sLen += seq->seq.l;
 			for(int j=0; j<seq->seq.l; j++)
 			{
-				cnt[toupper(seq->seq.s[j])]++;
+				cnt[ seq->seq.s[j] ]++;
 			}
 		}
 		kseq_destroy(seq);
 		gzclose(fp);
 	}
-	cout<< "   number of reads: " << num << endl;
-	cout<< "total num of bases: " << sLen << endl;
+	cout<< "# of reads: " << num << endl;
+	cout<< "# of bases: " << sLen << endl;
 	cout<< fixed << setprecision(2);
-	cout<< "  total num of N's: " << cnt['N'] << " (" << (double)cnt['N']/sLen*100 << "%)" << endl;
-	cout<< "  total num of A's: " << cnt['A'] << " (" << (double)cnt['A']/sLen*100 << "%)" << endl;
-	cout<< "  total num of C's: " << cnt['C'] << " (" << (double)cnt['C']/sLen*100 << "%)" << endl;
-	cout<< "  total num of G's: " << cnt['G'] << " (" << (double)cnt['G']/sLen*100 << "%)" << endl;
-	cout<< "  total num of T's: " << cnt['T'] << " (" << (double)cnt['T']/sLen*100 << "%)" << endl;
+	cout<< "# of n/N's: " << cnt['n']+cnt['N'] << " (" << (double)(cnt['n']+cnt['N'])/sLen*100 << "%)" << endl;
+	cout<< "       n's: " << cnt['n'] << " (" << (double)cnt['n']/sLen*100 << "%)" << endl;
+	cout<< "       N's: " << cnt['N'] << " (" << (double)cnt['N']/sLen*100 << "%)" << endl;
+	cout<< "# of a/A's: " << cnt['a']+cnt['A'] << " (" << (double)(cnt['a']+cnt['A'])/sLen*100 << "%)" << endl;
+	cout<< "       a's: " << cnt['a'] << " (" << (double)cnt['a']/sLen*100 << "%)" << endl;
+	cout<< "       A's: " << cnt['A'] << " (" << (double)cnt['A']/sLen*100 << "%)" << endl;
+	cout<< "# of c/C's: " << cnt['c']+cnt['C'] << " (" << (double)(cnt['c']+cnt['C'])/sLen*100 << "%)" << endl;
+	cout<< "       c's: " << cnt['c'] << " (" << (double)cnt['c']/sLen*100 << "%)" << endl;
+	cout<< "       C's: " << cnt['C'] << " (" << (double)cnt['C']/sLen*100 << "%)" << endl;
+	cout<< "# of g/G's: " << cnt['g']+cnt['G'] << " (" << (double)(cnt['g']+cnt['G'])/sLen*100 << "%)" << endl;
+	cout<< "       g's: " << cnt['g'] << " (" << (double)cnt['g']/sLen*100 << "%)" << endl;
+	cout<< "       G's: " << cnt['G'] << " (" << (double)cnt['G']/sLen*100 << "%)" << endl;
+	cout<< "# of t/T's: " << cnt['t']+cnt['T'] << " (" << (double)(cnt['t']+cnt['T'])/sLen*100 << "%)" << endl;
+	cout<< "       t's: " << cnt['t'] << " (" << (double)cnt['t']/sLen*100 << "%)" << endl;
+	cout<< "       T's: " << cnt['T'] << " (" << (double)cnt['T']/sLen*100 << "%)" << endl;
 
 	return 0;
 }
