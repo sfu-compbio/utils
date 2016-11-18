@@ -1,5 +1,6 @@
 #include "shuffle.h"
 #include "toLower.h"
+#include "revComp.h"
 #include "split.h"
 #include "getStat.h"
 #include "format.h"
@@ -39,6 +40,10 @@ int main(int argc, char* argv[])
 		{
 			return program_format(argc, argv);
 		}
+		else if(com == "revComp")
+		{
+			return program_revComp(argc, argv);
+		}
 		else
 		{
 			printHelp_main();
@@ -56,6 +61,7 @@ void printHelp_main()
 	cerr<< "         format       re-format the fasta/q file based on user's needs" << endl;
 	cerr<< "         shuffle      interleave/interlace fasta/q files" << endl;
 	cerr<< "         toLower      convert fasta/q reads to lowercase" << endl;
+	cerr<< "         revComp      convert each fasta/q reads to its reverse-complement" << endl;
 	cerr<< "         split        split a fasta/q file into smaller files" << endl;
 	cerr<< endl;
 }

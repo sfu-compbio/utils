@@ -12,7 +12,7 @@ LDFLAGS=#-static
 LIBS=-lz -lm -pthread -lpthread
 CFLAGS=-DFASTUTILS_VERSION=\"$(FASTUTILS_VERSION)\" -DBUILD_DATE=\"$(BUILD_DATE)\" #-fno-pic 
 
-objects=main.o shuffle.o toLower.o split.o getStat.o format.o common.o
+objects=main.o shuffle.o toLower.o revComp.o split.o getStat.o format.o common.o
 
 # compile: $(objects)
 

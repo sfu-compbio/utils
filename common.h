@@ -26,7 +26,9 @@ string 				str2Lower(string str);
 string 				str2Upper(string str);
 void 				revString(string &str, string &revStr);
 void 				revComplement(string &str, string &revStr);
+void 				revString(string &revStr, char *str);
 int 				parseCommandLine (int argc, char *argv[]);
+void 				revComplement(string &revStr, char *str);
 void 				printHelp();
 
 template <typename T>

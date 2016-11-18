@@ -3,22 +3,78 @@
 #include "kseq.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <getopt.h>
+#include <limits.h>
 #include <zlib.h>
 
 using namespace std;
 
-string 		_format_IN_FILE;
-string 		_format_OUT_FILE;
-int 		_format_LINE_WIDTH = 0;
-bool 		_format_isFastq = false;
-ofstream 	_format_fout;
-ostream 	*_format_pout;
+string 			_format_IN_FILE;
+string 			_format_OUT_FILE;
+int 			_format_LINE_WIDTH = 0;
+long long 		_format_MIN_LEN = 0;
+long long 		_format_MAX_LEN = LLONG_MAX;
+bool 			_format_isFastq = false;
+bool 			_format_filterN = false;
+bool 			_format_noComment = true;
+bool 			_format_pacbio = false;
+ofstream 		_format_fout;
+ostream 		*_format_pout;
 
 int parseCommandLine_format(int argc, char *argv[]);
 void printHelp_format();
 
 KSEQ_INIT(gzFile, gzread)
+
+void printRead_format(ostream &outObj, kseq_t *readSeq, long long cnt)
+{
+    int tmpPos;
+    string tmpStr;
+	if(_format_isFastq && readSeq->qual.l>0)
+	{
+		outObj<< "@" << readSeq->name.s;
+		if(_format_pacbio)
+			outObj<< "/" << cnt << "/0_" << readSeq->seq.l;
+		if(_format_noComment==false && readSeq->comment.l > 0)
+			outObj<< " " << readSeq->comment.s << "\n";
+		else
+			outObj<< "\n";
+		outObj<< readSeq->seq.s << "\n";
+		outObj<< "+" << "\n";
+		outObj<< readSeq->qual.s << "\n";
+	}
+	else
+	{
+		outObj<< ">" << readSeq->name.s;
+		if(_format_pacbio)
+			outObj<< "/" << cnt << "/0_" << readSeq->seq.l;
+		if(_format_noComment==false && readSeq->comment.l > 0)
+			outObj<< " " << readSeq->comment.s << "\n";
+		else
+			outObj<< "\n";
+		if(_format_LINE_WIDTH == 0)
+		{
+			outObj<< readSeq->seq.s << "\n";
+		}
+		else
+		{
+			tmpPos = 0;
+			tmpStr = readSeq->seq.s;
+			while(readSeq->seq.l - tmpPos > _format_LINE_WIDTH)
+			{
+				outObj<< tmpStr.substr(tmpPos, _format_LINE_WIDTH) << "\n";
+				tmpPos += _format_LINE_WIDTH;
+			}
+			outObj<< tmpStr.substr(tmpPos) << "\n";
+		}
+	}
+}
+
+bool hasNoN(string r)
+{
+	return (r.find('n')==string::npos && r.find('N')==string::npos);
+}
 
 int program_format(int argc, char* argv[])
 {
@@ -34,6 +90,7 @@ int program_format(int argc, char* argv[])
 	ostream &outObj = *_format_pout;
 
 	gzFile readFile;
+	ostringstream sout;
     kseq_t *readSeq;
 	readFile = gzopen(_format_IN_FILE.c_str(), "r");
 	if(readFile==NULL)
@@ -43,36 +100,32 @@ int program_format(int argc, char* argv[])
 	}
 	
     readSeq = kseq_init(readFile);
-    int tmpPos;
-    string tmpStr;
+    bool flag1, flag2;
+    long long cnt = 0;
 	while (kseq_read(readSeq) >= 0)
 	{
-		if(_format_isFastq && readSeq->qual.l>0)
+		sout.clear();
+		sout.str("");
+		flag1 = hasNoN(readSeq->seq.s);
+		printRead_format(sout, readSeq, cnt);
+
+		if( ((!_format_filterN) || (_format_filterN && flag1)) &&
+			readSeq->seq.l >= _format_MIN_LEN && 
+			readSeq->seq.l <= _format_MAX_LEN )
 		{
-			outObj<< "@" << readSeq->name.s << "\n";
-			outObj<< readSeq->seq.s << "\n";
-			outObj<< "+" << "\n";
-			outObj<< readSeq->qual.s << "\n";
+			outObj<< sout.str();
+			cnt++;
 		}
-		else
-		{
-			outObj<< ">" << readSeq->name.s << "\n";
-			if(_format_LINE_WIDTH == 0)
-			{
-				outObj<< readSeq->seq.s << "\n";
-			}
-			else
-			{
-				tmpPos = 0;
-				tmpStr = readSeq->seq.s;
-				while(readSeq->seq.l - tmpPos > _format_LINE_WIDTH)
-				{
-					outObj<< tmpStr.substr(tmpPos, _format_LINE_WIDTH) << "\n";
-					tmpPos += _format_LINE_WIDTH;
-				}
-				outObj<< tmpStr.substr(tmpPos) << "\n";
-			}
-		}
+
+		// if(kseq_read(readSeq) < 0)
+		// 	break;
+		// cnt++;
+		// flag2 = hasNoN(readSeq->seq.s);
+		// printRead_format(sout, readSeq, cnt);
+		// if((!_format_filterN) || (_format_filterN && flag1 && flag2))
+		// 	outObj<< sout.str();
+		// else
+		// 	cnt -= 2;
 	}
     kseq_destroy(readSeq);
     gzclose(readFile);
@@ -93,13 +146,18 @@ int parseCommandLine_format(int argc, char *argv[])
 		{"file", 		required_argument, 		0, 		'f'	},
 		{"out", 		required_argument, 		0, 		'o'	},
 		{"lineWidth", 	required_argument, 		0, 		'w'	},
+		{"minLen", 		required_argument, 		0, 		'm'	},
+		{"maxLen", 		required_argument, 		0, 		'M'	},
 		{"fastq", 		no_argument, 			0, 		'q'	},
+		{"filterN", 	no_argument, 			0, 		'n'	},
+		{"noComment", 	no_argument, 			0, 		'c'	},
+		{"pacbio", 		no_argument, 			0, 		'p'	},
 		{"help", 		no_argument, 			0, 		'h'	},
 		{"version", 	no_argument, 			0, 		'v'	},
 		{0,0,0,0}
 	};
 
-	while ( (c = getopt_long ( argc, argv, "f:o:w:qhv", longOptions, &index))!= -1 )
+	while ( (c = getopt_long ( argc, argv, "f:o:w:m:M:qncphv", longOptions, &index))!= -1 )
 	{
 		switch (c)
 		{
@@ -112,8 +170,23 @@ int parseCommandLine_format(int argc, char *argv[])
 			case 'w':
 				_format_LINE_WIDTH = str2type<int>(optarg);
 				break;
+			case 'm':
+				_format_MIN_LEN = str2type<long long>(optarg);
+				break;
+			case 'M':
+				_format_MAX_LEN = str2type<long long>(optarg);
+				break;
 			case 'q':
 				_format_isFastq = true;
+				break;
+			case 'n':
+				_format_filterN = true;
+				break;
+			case 'c':
+				_format_noComment = false;
+				break;
+			case 'p':
+				_format_pacbio = true;
 				break;
 			case 'h':
 				printHelp_format();
@@ -139,8 +212,17 @@ int parseCommandLine_format(int argc, char *argv[])
 		return 0;
 	}
 	if(_format_LINE_WIDTH < 0)
-	{
 		_format_LINE_WIDTH = 0;
+	if(_format_MIN_LEN < 0)
+		_format_MIN_LEN = 0;
+	if(_format_MAX_LEN < 0)
+		_format_MAX_LEN = LLONG_MAX;
+	if(_format_MIN_LEN > _format_MAX_LEN)
+	{
+		cerr << endl;
+		cerr<< "[ERROR] minLen cannot be greater than maxLen" << endl;
+		cerr << endl;
+		return 0;
 	}
 
 	if(_format_OUT_FILE == "")
@@ -171,6 +253,8 @@ void printHelp_format()
 	cerr << "More options:" << endl;
 	cerr << "         -o STR        output reads in STR file [stdout]" << endl;
 	cerr << "         -w INT        wrap lines in fasta output, 0 means no wrapping [0]" << endl;
+	cerr << "         -m INT        min read length [0]" << endl;
+	cerr << "         -M INT        max read length [LLONG_MAX]" << endl;
 	cerr << "         -q            output reads in fastq format if possible" << endl;
 	cerr << "         -v            print version" << endl;
 	cerr << "         -h            print this help" << endl;

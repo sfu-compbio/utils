@@ -67,3 +67,19 @@ void revComplement(string &revStr, string &str)
 	for(int i=0; i<n; i++)
 		revStr[i] = _com_revVal[str[n-i-1]];
 }
+
+void revString(string &revStr, char *str)
+{
+	int n = strlen(str);
+	revStr.assign(n, 'N');
+	for(int i=0; i<n; i++)
+		revStr[i] = str[n-i-1];
+}
+
+void revComplement(string &revStr, char *str)
+{
+	int n = strlen(str);
+	revStr.assign(n, 'N');
+	for(int i=0; i<n; i++)
+		revStr[i] = _com_revVal[str[n-i-1]];
+}
