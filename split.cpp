@@ -10,6 +10,7 @@ using namespace std;
 
 string 		_split_IN_FILE;
 string 		_split_OUT_PRE;
+int 		_split_LINE_WIDTH = 0;
 bool 		_split_ISFASTQ = false;
 ofstream 	_split_fout;
 double 		_split_SIZE;
@@ -44,6 +45,8 @@ int program_split(int argc, char* argv[])
 	bool isOpen = false;
 	int cnt = 1;
 	long long totalBases = 0;
+    int tmpPos;
+    string tmpStr;
 	
     readSeq = kseq_init(readFile);
 	while (kseq_read(readSeq) >= 0)
@@ -80,7 +83,21 @@ int program_split(int argc, char* argv[])
 		else
 		{
 			_split_fout<< ">" << readSeq->name.s << "\n";
-			_split_fout<< readSeq->seq.s << "\n";
+			if(_split_LINE_WIDTH == 0)
+			{
+				_split_fout<< readSeq->seq.s << "\n";
+			}
+			else
+			{
+				tmpPos = 0;
+				tmpStr = readSeq->seq.s;
+				while(readSeq->seq.l - tmpPos > _split_LINE_WIDTH)
+				{
+					_split_fout<< tmpStr.substr(tmpPos, _split_LINE_WIDTH) << "\n";
+					tmpPos += _split_LINE_WIDTH;
+				}
+				_split_fout<< tmpStr.substr(tmpPos) << "\n";
+			}
 		}
 		totalBases += readSeq->seq.l;
 		if(totalBases > _split_SIZE)
@@ -123,13 +140,14 @@ int parseCommandLine_split(int argc, char *argv[])
 		{"file", 		required_argument, 		0, 		'f'	},
 		{"prefix", 		required_argument, 		0, 		'p'	},
 		{"size", 		required_argument, 		0, 		's'	},
+		{"lineWidth", 	required_argument, 		0, 		'w'	},
 		{"fastq", 		no_argument, 			0, 		'q'	},
 		{"help", 		no_argument, 			0, 		'h'	},
 		{"version", 	no_argument, 			0, 		'v'	},
 		{0,0,0,0}
 	};
 
-	while ( (c = getopt_long( argc, argv, "f:p:s:qhv", longOptions, &index))!= -1 )
+	while ( (c = getopt_long( argc, argv, "f:p:s:w:qhv", longOptions, &index))!= -1 )
 	{
 		switch (c)
 		{
@@ -141,6 +159,9 @@ int parseCommandLine_split(int argc, char *argv[])
 				break;
 			case 's':
 				_split_SIZE = str2type<double>(optarg);
+				break;
+			case 'w':
+				_split_LINE_WIDTH = str2type<int>(optarg);
 				break;
 			case 'q':
 				_split_ISFASTQ = true;
@@ -177,17 +198,17 @@ int parseCommandLine_split(int argc, char *argv[])
 		return 0;
 	}
 
-	if(_split_SIZE < 1)
-	{
-		cerr << endl;
-		cerr<< "[ERROR] option -s is required (should be positive integer)" << endl;
-		cerr << endl;
-		return 0;
-	}
-	else
-	{
-		_split_SIZE = _split_SIZE*1024*1024;
-	}
+	// if(_split_SIZE < 1)
+	// {
+	// 	cerr << endl;
+	// 	cerr<< "[ERROR] option -s is required (should be positive integer)" << endl;
+	// 	cerr << endl;
+	// 	return 0;
+	// }
+	// else
+	// {
+		_split_SIZE = _split_SIZE*1000*1000;
+	// }
 
 	return 1;
 }
@@ -202,6 +223,7 @@ void printHelp_split()
 	cerr << "         -p STR        prefix of output files" << endl;
 	cerr << "         -s INT        maximum number of Mega bases (Mbp) for each file" << endl;
 	cerr << "More options:" << endl;
+	cerr << "         -w INT        wrap lines in fasta output, 0 means no wrapping [0]" << endl;
 	cerr << "         -q            output reads in fastq format if possible" << endl;
 	cerr << "         -v            print version" << endl;
 	cerr << "         -h            print this help" << endl;
